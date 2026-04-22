@@ -3,7 +3,7 @@ from stellar_sdk import Server, Keypair, TransactionBuilder, Asset
 from stellar_sdk.operation import Payment
 from stellar_sdk.exceptions import NotFoundError, BadRequestError
 from typing import Dict, Any, Tuple
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from .config import config
 
 class StellarClient:
@@ -72,7 +72,13 @@ class StellarClient:
         # Calculate total cost: payment + estimated fee + minimum balance reserve
         payment_amount = Decimal(str(amount))
         estimated_fee = Decimal('0.00001')  # Base fee
-        minimum_reserve = Decimal(str(config.minimum_balance_xlm))
+        
+        # Safely convert minimum_balance_xlm to Decimal with error handling
+        try:
+            minimum_reserve = Decimal(str(config.minimum_balance_xlm))
+        except (ValueError, TypeError, InvalidOperation) as e:
+            # Fallback to default minimum balance if config value is invalid
+            minimum_reserve = Decimal('1.0')
         
         total_required = payment_amount + estimated_fee + minimum_reserve
         
